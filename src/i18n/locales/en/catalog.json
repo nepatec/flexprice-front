@@ -821,7 +821,8 @@
 			"displayUnitName": "Display Unit Name",
 			"usageReset": "Usage Reset ",
 			"bucketSize": "Bucket Size",
-			"groupBy": "Group by"
+			"groupBy": "Group by",
+			"metadata": "Metadata"
 		}
 	},
 	"entityChargesPage": {

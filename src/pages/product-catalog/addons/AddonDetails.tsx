@@ -13,6 +13,7 @@ import {
 	TerminatePriceModal,
 	UpdatePriceDialog,
 	UpdatePriceDetailsDrawer,
+	MetadataModal,
 } from '@/components/molecules';
 import { Dialog } from '@/components/ui';
 import { PriceApi } from '@/api/PriceApi';
@@ -262,6 +263,7 @@ const AddonDetails = () => {
 	const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false);
 	const [selectedPriceForTermination, setSelectedPriceForTermination] = useState<Price | null>(null);
 	const [showTerminateModal, setShowTerminateModal] = useState(false);
+	const [showMetadataModal, setShowMetadataModal] = useState(false);
 
 	const {
 		data: addonData,
@@ -421,6 +423,17 @@ const AddonDetails = () => {
 		},
 		[selectedPriceForTermination, deletePrice],
 	);
+
+	const handleSaveMetadata = async (newMetadata: Record<string, string>) => {
+		try {
+			await AddonApi.Update(id!, { metadata: newMetadata });
+			setShowMetadataModal(false);
+			refetchQueries(['fetchAddon', id!]);
+			toast.success('Metadata updated successfully');
+		} catch {
+			toast.error('Failed to update metadata');
+		}
+	};
 
 	const chargeColumns = useMemo(
 		() =>
@@ -595,6 +608,13 @@ const AddonDetails = () => {
 				/>
 			)}
 
+			<MetadataModal
+				open={showMetadataModal}
+				data={addonData.metadata ?? {}}
+				onSave={handleSaveMetadata}
+				onClose={() => setShowMetadataModal(false)}
+			/>
+
 			{/* Terminate Price Modal */}
 			<Dialog open={showTerminateModal} onOpenChange={setShowTerminateModal}>
 				{selectedPriceForTermination && (
@@ -644,14 +664,36 @@ const AddonDetails = () => {
 				{/* Credit Grants Section */}
 				<AddonCreditGrantsSection addonId={addonData.id} />
 
-				{addonData.metadata && Object.keys(addonData.metadata).length > 0 && (
-					<Card variant='notched'>
-						<CardHeader title={t('catalog:addons.details.metadata')} />
-						<div className='p-4'>
-							<pre className='text-sm bg-surface-subtle p-3 rounded overflow-auto'>{JSON.stringify(addonData.metadata, null, 2)}</pre>
-						</div>
-					</Card>
-				)}
+				<Card variant='notched'>
+					<CardHeader
+						title={t('catalog:addons.details.metadata')}
+						cta={
+							addonData.status === ENTITY_STATUS.PUBLISHED &&
+							(canWriteAddon ? (
+								<Button variant='outline' size='icon' onClick={() => setShowMetadataModal(true)}>
+									<Pencil className='size-5' />
+								</Button>
+							) : (
+								<Tooltip content={t('catalog:addons.writeDeniedTooltip')}>
+									<span tabIndex={0} className='inline-block cursor-not-allowed'>
+										<Button variant='outline' size='icon' disabled>
+											<Pencil className='size-5' />
+										</Button>
+									</span>
+								</Tooltip>
+							))
+						}
+					/>
+					<DetailsCard
+						variant='stacked'
+						data={
+							addonData.metadata && Object.keys(addonData.metadata).length > 0
+								? Object.entries(addonData.metadata).map(([key, value]) => ({ label: key, value }))
+								: [{ label: 'No metadata available.', value: '' }]
+						}
+						cardStyle='borderless'
+					/>
+				</Card>
 
 				<Spacer className='!h-20' />
 			</div>

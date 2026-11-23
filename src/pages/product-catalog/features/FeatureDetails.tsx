@@ -37,6 +37,8 @@ import {
 	DropdownMenu,
 	DropdownMenuOption,
 	FeatureDrawer,
+	DetailsCard,
+	MetadataModal,
 } from '@/components/molecules';
 import JsonCodeBlock from '@/components/molecules/Events/JsonCodeBlock';
 import { API_DOCS_TAGS } from '@/constants/apiDocsTags';
@@ -124,6 +126,7 @@ const FeatureDetails = () => {
 	const canWriteAlertSettings = can('alert_settings', 'write');
 	const [showAlertDialog, setShowAlertDialog] = useState(false);
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const [showMetadataModal, setShowMetadataModal] = useState(false);
 	const [configSheet, setConfigSheet] = useState<{ open: boolean; name: string; value: JsonObject | null }>({
 		open: false,
 		name: '',
@@ -198,6 +201,17 @@ const FeatureDetails = () => {
 			toast.error(error.message || 'Failed to archive feature');
 		},
 	});
+
+	const handleSaveMetadata = async (newMetadata: Record<string, string>) => {
+		try {
+			await FeatureApi.updateFeature(featureId, { metadata: newMetadata });
+			setShowMetadataModal(false);
+			refetchQueries(['fetchFeatureDetails', featureId]);
+			toast.success('Metadata updated successfully');
+		} catch {
+			toast.error('Failed to update metadata');
+		}
+	};
 
 	useEffect(() => {
 		updateBreadcrumb(1, 'Features', RouteNames.features);
@@ -397,6 +411,13 @@ const FeatureDetails = () => {
 				}>
 				<ApiDocsContent tags={API_DOCS_TAGS.Features} snippets={data?.type === FEATURE_TYPE.METERED ? snippets : undefined} />
 
+				<MetadataModal
+					open={showMetadataModal}
+					data={data?.metadata ?? {}}
+					onSave={handleSaveMetadata}
+					onClose={() => setShowMetadataModal(false)}
+				/>
+
 				{/* Feature Alert Dialog */}
 				<FeatureAlertDialog
 					open={showAlertDialog}
@@ -541,6 +562,37 @@ const FeatureDetails = () => {
 							</div>
 						</Card>
 					)}
+
+					<Card variant='notched'>
+						<CardHeader
+							title={t('catalog:features.details.metadata')}
+							cta={
+								data?.status === ENTITY_STATUS.PUBLISHED &&
+								(canWriteFeature ? (
+									<Button variant='outline' size='icon' onClick={() => setShowMetadataModal(true)}>
+										<Pencil className='size-5' />
+									</Button>
+								) : (
+									<Tooltip content={t('catalog:features.writeDeniedTooltip')}>
+										<span tabIndex={0} className='inline-block cursor-not-allowed'>
+											<Button variant='outline' size='icon' disabled>
+												<Pencil className='size-5' />
+											</Button>
+										</span>
+									</Tooltip>
+								))
+							}
+						/>
+						<DetailsCard
+							variant='stacked'
+							data={
+								data?.metadata && Object.keys(data.metadata).length > 0
+									? Object.entries(data.metadata).map(([key, value]) => ({ label: key, value }))
+									: [{ label: 'No metadata available.', value: '' }]
+							}
+							cardStyle='borderless'
+						/>
+					</Card>
 				</div>
 				{data && (
 					<FeatureDrawer

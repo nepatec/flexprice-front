@@ -819,7 +819,8 @@
 			"displayUnitName": "اسم وحدة العرض",
 			"usageReset": "إعادة ضبط الاستخدام ",
 			"bucketSize": "حجم الدفعة",
-			"groupBy": "تجميع حسب"
+			"groupBy": "تجميع حسب",
+			"metadata": "البيانات الوصفية"
 		}
 	},
 	"entityChargesPage": {

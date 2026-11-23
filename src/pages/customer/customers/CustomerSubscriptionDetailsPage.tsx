@@ -1,5 +1,11 @@
-import { Card, FormHeader, Page, Spacer, Chip } from '@/components/atoms';
-import { IntegrationMappingCard, SubscriptionAddonsSection, UpcomingCreditGrantApplicationsTable } from '@/components/molecules';
+import { Button, Card, FormHeader, Page, Spacer, Chip, Tooltip } from '@/components/atoms';
+import {
+	DetailsCard,
+	IntegrationMappingCard,
+	MetadataModal,
+	SubscriptionAddonsSection,
+	UpcomingCreditGrantApplicationsTable,
+} from '@/components/molecules';
 import SubscriptionDetailChargesSection from '@/components/molecules/Subscription/SubscriptionDetailChargesSection';
 import FlexpriceTable, { ColumnData, RedirectCell } from '@/components/molecules/Table';
 import { SubscriptionPreviewLineItemTable } from '@/components/molecules/InvoiceLineItemTable';
@@ -27,7 +33,9 @@ import { SubscriptionResponse } from '@/types/dto/Subscription';
 import { generateExpandQueryParams } from '@/utils/common/api_helper';
 import formatDate from '@/utils/common/format_date';
 import { BILLING_PERIOD, paymentTermsOptions } from '@/constants/constants';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Pencil } from 'lucide-react';
+import { refetchQueries } from '@/core/services/tanstack/ReactQueryProvider';
+import { useCurrentUserPermissions } from '@/hooks/useCurrentUserPermissions';
 import { formatSubscriptionTypeDisplayLabel } from '@/utils/subscription/formatSubscriptionTypeDisplay';
 
 const DATE_NO_YEAR_FORMAT: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
@@ -106,6 +114,20 @@ const CustomerSubscriptionDetailsPage: FC = () => {
 		},
 		staleTime: 1,
 	});
+	const { can } = useCurrentUserPermissions();
+	const canWriteSubscription = can('subscription', 'write');
+	const [showMetadataModal, setShowMetadataModal] = useState(false);
+
+	const handleSaveMetadata = async (newMetadata: Record<string, string>) => {
+		try {
+			await SubscriptionApi.updateSubscription(subscription_id!, { metadata: newMetadata });
+			setShowMetadataModal(false);
+			refetchQueries(['subscriptionDetails', subscription_id!]);
+			toast.success('Metadata updated successfully');
+		} catch {
+			toast.error('Failed to update metadata');
+		}
+	};
 
 	const { data: customer } = useQuery({
 		queryKey: ['fetchCustomerDetails', customerId],
@@ -474,6 +496,41 @@ const CustomerSubscriptionDetailsPage: FC = () => {
 					<IntegrationMappingCard entityType='subscription' entityId={subscription_id} />
 				</div>
 			)}
+
+			<Card className='card mt-8'>
+				<div className='flex justify-between items-center'>
+					<FormHeader title={t('tabPanels.common.metadata')} variant='sub-header' titleClassName='font-semibold' />
+					{subscriptionDetails?.subscription_status !== SUBSCRIPTION_STATUS.CANCELLED &&
+						(canWriteSubscription ? (
+							<Button variant='outline' size='icon' onClick={() => setShowMetadataModal(true)}>
+								<Pencil className='size-5' />
+							</Button>
+						) : (
+							<Tooltip content={t('subscriptionAction.writeDeniedTooltip')}>
+								<span tabIndex={0} className='inline-block cursor-not-allowed'>
+									<Button variant='outline' size='icon' disabled>
+										<Pencil className='size-5' />
+									</Button>
+								</span>
+							</Tooltip>
+						))}
+				</div>
+				<DetailsCard
+					variant='stacked'
+					data={
+						subscriptionDetails?.metadata && Object.keys(subscriptionDetails.metadata).length > 0
+							? Object.entries(subscriptionDetails.metadata).map(([key, value]) => ({ label: key, value }))
+							: [{ label: 'No metadata available.', value: '' }]
+					}
+					cardStyle='borderless'
+				/>
+			</Card>
+			<MetadataModal
+				open={showMetadataModal}
+				data={subscriptionDetails?.metadata ?? {}}
+				onSave={handleSaveMetadata}
+				onClose={() => setShowMetadataModal(false)}
+			/>
 
 			{/* subscription schedule */}
 			{subscriptionDetails?.schedule?.phases?.length && subscriptionDetails?.schedule?.phases?.length > 0 && (

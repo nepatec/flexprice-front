@@ -527,6 +527,7 @@ export interface UpdateSubscriptionRequest {
 	cancel_at_period_end?: boolean;
 	/** Set to another subscription ID to link as child; "" or null to clear; omit to leave unchanged */
 	parent_subscription_id?: string | null;
+	metadata?: Metadata;
 }
 
 export interface CancelSubscriptionRequest {
