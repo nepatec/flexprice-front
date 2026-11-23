@@ -320,7 +320,7 @@ export const RouterErrorElement = () => {
 	const error = useRouteError() as Error;
 	const errorId = logError(error);
 
-	return <ErrorFallback error={error} errorId={errorId} resetError={() => (window.location.href = RouteNames.home)} />;
+	return <ErrorFallback error={error} errorId={errorId} resetError={() => (window.location.href = import.meta.env.BASE_URL)} />;
 };
 
 export default ErrorBoundary;

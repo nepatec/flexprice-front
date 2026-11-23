@@ -137,7 +137,7 @@ class AuthService {
 			if (value !== null) localStorage.setItem(key, value);
 		}
 
-		window.location.href = RouteNames.login;
+		window.location.href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}${RouteNames.login}`;
 	}
 }
 

@@ -1,5 +1,5 @@
 import MainLayout from '@/layouts/MainLayout';
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import AuthMiddleware from '../auth/AuthProvider';
 import { useUser } from '@/hooks/UserContext';
 import { TenantMetadataKey } from '@/models/Tenant';
@@ -217,7 +217,7 @@ const DefaultRoute = () => {
 	return <Navigate to={onboardingCompleted ? RouteNames.homeDashboard : RouteNames.onboarding} />;
 };
 
-export const MainRouter: any = createBrowserRouter([
+const routes: RouteObject[] = [
 	// public routes
 	{
 		path: RouteNames.login,
@@ -720,4 +720,7 @@ export const MainRouter: any = createBrowserRouter([
 		element: <ErrorPage />,
 		errorElement: <RouterErrorElement />,
 	},
-]);
+];
+
+// nepatec: basename = Vite's base (VITE_BASE_PATH, see vite.config.ts)
+export const MainRouter: any = createBrowserRouter(routes, { basename: import.meta.env.BASE_URL });
