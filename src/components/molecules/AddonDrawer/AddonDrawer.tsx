@@ -110,7 +110,6 @@ const AddonDrawer: FC<Props> = ({ data, open, onOpenChange, trigger, refetchQuer
 			<Spacer height={'20px'} />
 			<Input
 				label={t('shared.lookupKey')}
-				disabled={isEdit}
 				error={errors.lookup_key}
 				onChange={(e) => setFormData({ ...formData, lookup_key: e })}
 				value={formData.lookup_key}

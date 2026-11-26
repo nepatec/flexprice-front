@@ -48,6 +48,7 @@ export interface AddonResponse extends Addon {
 
 export interface UpdateAddonRequest {
 	name?: string;
+	lookup_key?: string;
 	description?: string;
 	metadata?: Metadata;
 }

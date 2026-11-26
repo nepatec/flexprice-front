@@ -407,6 +407,11 @@ const FeatureDetails = () => {
 					<div className='flex items-center gap-2'>
 						{data?.name}
 						{data?.id && <CopyIdButton id={data.id} entityType='Feature' />}
+						{data?.lookup_key && (
+							<span className='text-sm font-normal text-content-muted'>
+								{t('catalog:shared.lookupKey')}: {data.lookup_key}
+							</span>
+						)}
 					</div>
 				}>
 				<ApiDocsContent tags={API_DOCS_TAGS.Features} snippets={data?.type === FEATURE_TYPE.METERED ? snippets : undefined} />

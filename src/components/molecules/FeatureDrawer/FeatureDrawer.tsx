@@ -33,6 +33,7 @@ const FeatureDrawer: FC<Props> = ({ data, open, onOpenChange, trigger, refetchQu
 	const { t } = useTranslation(['catalog', 'common']);
 	const [formData, setFormData] = useState<UpdateFeatureRequest>({
 		name: data?.name || '',
+		lookup_key: data?.lookup_key || '',
 		description: data?.description || '',
 		group_id: data?.group_id ?? data?.group?.id ?? '',
 		unit_singular: data?.unit_singular || '',
@@ -59,6 +60,7 @@ const FeatureDrawer: FC<Props> = ({ data, open, onOpenChange, trigger, refetchQu
 		if (data) {
 			setFormData({
 				name: data.name || '',
+				lookup_key: data.lookup_key || '',
 				description: data.description || '',
 				group_id: data.group_id ?? data.group?.id ?? '',
 				unit_singular: data.unit_singular || '',
@@ -75,6 +77,9 @@ const FeatureDrawer: FC<Props> = ({ data, open, onOpenChange, trigger, refetchQu
 		if (!formData.name?.trim()) {
 			newErrors.name = 'Name is required';
 		}
+		if (!formData.lookup_key?.trim()) {
+			newErrors.lookup_key = 'Lookup key is required';
+		}
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
@@ -87,6 +92,7 @@ const FeatureDrawer: FC<Props> = ({ data, open, onOpenChange, trigger, refetchQu
 
 		const updateDto: UpdateFeatureRequest = {
 			name: formData.name?.trim(),
+			lookup_key: formData.lookup_key?.trim(),
 			description: formData.description?.trim() || undefined,
 			group_id: formData.group_id?.trim() === '' ? '' : formData.group_id?.trim() || undefined,
 			unit_singular: formData.unit_singular?.trim() || undefined,
@@ -121,6 +127,15 @@ const FeatureDrawer: FC<Props> = ({ data, open, onOpenChange, trigger, refetchQu
 					error={errors.name}
 					onChange={(e) => {
 						setFormData({ ...formData, name: e });
+					}}
+				/>
+
+				<Input
+					label={t('catalog:shared.lookupKey')}
+					value={formData.lookup_key || ''}
+					error={errors.lookup_key}
+					onChange={(e) => {
+						setFormData({ ...formData, lookup_key: e });
 					}}
 				/>
 

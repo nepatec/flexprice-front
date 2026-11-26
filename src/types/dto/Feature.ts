@@ -31,6 +31,7 @@ export interface CreateFeatureRequest {
 
 export interface UpdateFeatureRequest {
 	name?: string;
+	lookup_key?: string;
 	description?: string;
 	metadata?: Metadata;
 	unit_singular?: string;
