@@ -1,6 +1,6 @@
 import { Button, CardHeader, Chip, Loader, Page, Spacer, Card, Tooltip } from '@/components/atoms';
 import { useCurrentUserPermissions } from '@/hooks/useCurrentUserPermissions';
-import { ApiDocsContent, DetailsCard } from '@/components/molecules';
+import { ApiDocsContent, DetailsCard, MetadataModal } from '@/components/molecules';
 import { API_DOCS_TAGS } from '@/constants/apiDocsTags';
 import { RouteNames } from '@/core/routes/Routes';
 import { useBreadcrumbsStore } from '@/store/useBreadcrumbsStore';
@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router';
+import { refetchQueries } from '@/core/services/tanstack/ReactQueryProvider';
 import { TaxRateResponse } from '@/types/dto/tax';
 import { TAX_RATE_TYPE, TAX_RATE_SCOPE, TaxRate } from '@/models/Tax';
 import formatChips from '@/utils/common/format_chips';
@@ -27,6 +28,7 @@ const TaxrateDetailsPage = () => {
 	const { t } = useTranslation(['billing', 'common']);
 	const { taxrateId } = useParams<Params>();
 	const [taxDrawerOpen, setTaxDrawerOpen] = useState(false);
+	const [showMetadataModal, setShowMetadataModal] = useState(false);
 	const { can } = useCurrentUserPermissions();
 	const canWriteTax = can('tax', 'write');
 
@@ -54,6 +56,17 @@ const TaxrateDetailsPage = () => {
 			toast.error(error.message || t('taxes.toast.archiveFailed'));
 		},
 	});
+
+	const handleSaveMetadata = async (newMetadata: Record<string, string>) => {
+		try {
+			await TaxApi.updateTaxRate(taxrateId!, { metadata: newMetadata });
+			setShowMetadataModal(false);
+			refetchQueries(['fetchTaxRate', taxrateId!]);
+			toast.success(t('taxes.toast.updatedSuccess'));
+		} catch (error) {
+			toast.error((error as Error).message || t('taxes.toast.saveFailedUpdate'));
+		}
+	};
 
 	const naLabel = t('common:labels.na');
 
@@ -172,26 +185,46 @@ const TaxrateDetailsPage = () => {
 			}>
 			<TaxDrawer data={taxData as TaxRate} open={taxDrawerOpen} onOpenChange={setTaxDrawerOpen} refetchQueryKeys={['fetchTaxRate']} />
 			<ApiDocsContent tags={API_DOCS_TAGS.TaxRates} />
+			<MetadataModal
+				open={showMetadataModal}
+				data={taxData.metadata ?? {}}
+				onSave={handleSaveMetadata}
+				onClose={() => setShowMetadataModal(false)}
+			/>
 
 			<div className='space-y-6'>
 				<DetailsCard variant='stacked' title={t('taxes.taxRateDetails')} data={taxDetails} />
 
-				{/* Metadata Section */}
-				{taxData.metadata && Object.keys(taxData.metadata).length > 0 && (
-					<Card variant='notched'>
-						<CardHeader title={t('taxes.metadata')} />
-						<div className='p-4'>
-							<div className='grid grid-cols-2 gap-4'>
-								{Object.entries(taxData.metadata).map(([key, value]) => (
-									<div key={key} className='flex flex-col'>
-										<span className='text-sm text-content-muted'>{key}</span>
-										<span className='text-sm font-medium'>{value}</span>
-									</div>
-								))}
-							</div>
-						</div>
-					</Card>
-				)}
+				<Card variant='notched'>
+					<CardHeader
+						title={t('taxes.metadata')}
+						cta={
+							taxData.status !== ENTITY_STATUS.ARCHIVED &&
+							(canWriteTax ? (
+								<Button variant='outline' size='icon' onClick={() => setShowMetadataModal(true)}>
+									<Pencil className='size-5' />
+								</Button>
+							) : (
+								<Tooltip content={t('taxes.writeDeniedTooltip')}>
+									<span tabIndex={0} className='inline-block cursor-not-allowed'>
+										<Button variant='outline' size='icon' disabled>
+											<Pencil className='size-5' />
+										</Button>
+									</span>
+								</Tooltip>
+							))
+						}
+					/>
+					<DetailsCard
+						variant='stacked'
+						data={
+							taxData.metadata && Object.keys(taxData.metadata).length > 0
+								? Object.entries(taxData.metadata).map(([key, value]) => ({ label: key, value }))
+								: [{ label: 'No metadata available.', value: '' }]
+						}
+						cardStyle='borderless'
+					/>
+				</Card>
 
 				<Spacer className='!h-20' />
 			</div>
